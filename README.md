@@ -1,5 +1,6 @@
 # juniper_srx_log_analyzer
-Analyze Juniper SRX logs received by Syslog Server
+Analyze Juniper SRX logs received by syslog server
+
 Juniper SRX Report 1.0
 usage: srx_report.py [-h] [-f FILE] [-n] [-v]
 
