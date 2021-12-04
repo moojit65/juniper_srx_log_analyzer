@@ -12,3 +12,5 @@ optional arguments:
   -n, --nmap            perform nmap scan on detected IP addresses (default: nmap scans disabled)
   
   -v, --verbose         enable verbose output (default: verbosity disabled)
+
+This script produces a time stamped text file and csv file.
