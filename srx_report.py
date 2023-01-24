@@ -14,8 +14,9 @@ import argparse
 #RELEASE NOTES
 #   DATE        VER         AUTHOR          DESCRIPTION
 #   07-2021     1.0         MOOJIT          INITIAL RELEASE
+#   01-2023     2.0         MOOJIT          ADDED SECINTEL, AAMW PROCESSING
 
-MAJOR_VERSION = 1
+MAJOR_VERSION = 2
 MINOR_VERSION = 0
 
 NumberOfP1s = 0
@@ -24,6 +25,11 @@ NumberOfP3s = 0
 NumberOfP4s = 0
 NumberOfP5s = 0
 NumberOfP6s = 0
+NumberOfP7s = 0
+SECINTEL_Permit = 0
+SECINTEL_Block = 0
+AAMW_Permit = 0
+AAMW_Block = 0
 
 Match = False
 
@@ -32,18 +38,20 @@ EnableP2Report = True
 EnableP3Report = True
 EnableP4Report = True
 EnableP5Report = True
-EnableP6Report = False
+EnableP6Report = True
+EnableP7Report = True
 EnableNmapScan = False
 EnableCSVCreation = True
 EnableVerbosity = False
 CustomPath = False
 
-P1 = "IDP ATTACK AND SCREENS"
+P1 = "IDP ATTACK, SECINTEL, AAMW AND SCREENS"
 P2 = "IDP ATTACK"
 P3 = "SCREENS"
 P4 = "SCREENS TCP"
 P5 = "SCREENS UDP"
-P6 = "P6"
+P6 = "SECINTEL"
+P7 = "AAMW"
 
 P1list = []
 P2list = []
@@ -51,6 +59,7 @@ P3list = []
 P4list = []
 P5list = []
 P6list = []
+P7list = []
 
 P1_IP_list = []
 P2_IP_list = []
@@ -138,8 +147,9 @@ for file in files:
         f = open(path + file,"r")
         
         for line in f:
+
             if EnableP1Report == True:
-                if line.find("IDP_ATTACK") > -1 or line.find("SCREEN") > -1:
+                if line.find("IDP_ATTACK") > -1 or line.find("SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1:
                     Match = False
                     for item in P1list:
                         if item == line:
@@ -199,7 +209,7 @@ for file in files:
                         P5list.append(line)
                         
             if EnableP6Report == True:
-                if line.find("FW-6") > -1:
+                if line.find("RT_SECINTEL") > -1:
                     Match = False
                     for item in P6list:
                         if item == line:
@@ -209,6 +219,28 @@ for file in files:
                     if Match == False:
                         NumberOfP6s = NumberOfP6s + 1
                         P6list.append(line)
+                        
+                        if line.find("PERMIT") > -1:
+                            SECINTEL_Permit = SECINTEL_Permit + 1
+                        elif line.find("BLOCK") > -1:
+                            SECINTEL_Block = SECINTEL_Block + 1
+                       
+            if EnableP7Report == True:
+                if line.find("AAMW_ACTION") > -1:
+                    Match = False
+                    for item in P7list:
+                        if item == line:
+                            Match = True
+                            break
+                    
+                    if Match == False:
+                        NumberOfP7s = NumberOfP7s + 1
+                        P7list.append(line)
+                        
+                        if line.find("PERMIT") > -1:
+                            AAMW_Permit = AAMW_Permit + 1
+                        elif line.find("BLOCK") > -1:
+                            AAMW_Block = AAMW_Block + 1
         
         f.close
 
@@ -218,6 +250,7 @@ P3list.reverse()
 P4list.reverse()
 P5list.reverse()
 P6list.reverse()
+P7list.reverse()
 
 #FIRST LEVEL P1LIST FILTER  
 for line in P1list:
@@ -272,29 +305,120 @@ for line in P1list:
             var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src + "," + src_port + "," + ip_dest + "," + dest_port + "," + signature[0].strip() + "," + "," + action
         NumberOfP1IPs = NumberOfP1IPs + 1
         P1_IP_list.append(var)
+        
+    elif line.find("RT_SECINTEL") > -1:
+        timestamp = line.split(" ")
+        juniper_type = line.split(":")
+        if line.find("source-address") > -1:
+            myindex = line.find("source-address")
+            ip_src = line[myindex:].split("=")
+            ip_src = ip_src[1].split(" ")
+            ip_src = ip_src[0].strip()
+        if line.find("source-port") > -1:
+            myindex = line.find("source-port")
+            src_port = line[myindex:].split("=")
+            src_port = src_port[1].split(" ")
+            src_port = src_port[0].strip()
+        if line.find("destination-address") > -1:
+            myindex = line.find("destination-address")
+            ip_dest = line[myindex:].split("=")
+            ip_dest = ip_dest[1].split(" ")
+            ip_dest = ip_dest[0].strip()
+        if line.find("destination-port") > -1:
+            myindex = line.find("destination-port")
+            dest_port = line[myindex:].split("=")
+            dest_port = dest_port[1].split(" ")
+            dest_port = dest_port[0].strip()
+        if line.find("sub-category") > -1:
+            myindex = line.find("sub-category")
+            signature = line[myindex:].split("=")
+            signature = signature[1].split(" ")
+            signature = signature[0].strip()
+        if line.find("threat-severity") > -1:
+            myindex = line.find("threat-severity")
+            severity = line[myindex:].split("=")
+            severity = severity[1].split(" ")
+            severity = severity[0].strip()
+        if line.find("action") > -1:
+            myindex = line.find("action")
+            action = line[myindex:].split("=")
+            action = action[1].split(" ")
+            action = action[0].strip()
+        if len(timestamp[1]) > 1:
+            var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src.strip() + "," + src_port.strip() + "," + ip_dest.strip() + "," + dest_port.strip() + "," + signature.strip() + "," + severity.strip() + "," + action.strip()
+        else:
+            var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src.strip() + "," + src_port.strip() + "," + ip_dest.strip() + "," + dest_port.strip() + "," + signature.strip() + "," + severity.strip() + "," + action.strip()       
+        NumberOfP1IPs = NumberOfP1IPs + 1
+        P1_IP_list.append(var)
+        
+    elif line.find("AAMW_ACTION") > -1:
+        timestamp = line.split(" ")
+        juniper_type = line.split(":")
+        if line.find("source-address") > -1:
+            myindex = line.find("source-address")
+            ip_src = line[myindex:].split("=")
+            ip_src = ip_src[1].split(" ")
+            ip_src = ip_src[0].strip()
+        if line.find("source-port") > -1:
+            myindex = line.find("source-port")
+            src_port = line[myindex:].split("=")
+            src_port = src_port[1].split(" ")
+            src_port = src_port[0].strip()
+        if line.find("destination-address") > -1:
+            myindex = line.find("destination-address")
+            ip_dest = line[myindex:].split("=")
+            ip_dest = ip_dest[1].split(" ")
+            ip_dest = ip_dest[0].strip()
+        if line.find("destination-port") > -1:
+            myindex = line.find("destination-port")
+            dest_port = line[myindex:].split("=")
+            dest_port = dest_port[1].split(" ")
+            dest_port = dest_port[0].strip()
+        if line.find("url") > -1:
+            myindex = line.find("url")
+            signature = line[myindex:].split("=")
+            signature = signature[1].split(" ")
+            signature = (signature[0].replace(",","_")).strip()
+        if line.find("verdict-number") > -1:
+            myindex = line.find("verdict-number")
+            severity = line[myindex:].split("=")
+            severity = severity[1].split(" ")
+            severity = severity[0].strip()
+        if line.find("action") > -1:
+            myindex = line.find("action")
+            action = line[myindex:].split("=")
+            action = action[1].split(" ")
+            action = action[0].strip()
+        if len(timestamp[1]) > 1:
+            var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src.strip() + "," + src_port.strip() + "," + ip_dest.strip() + "," + dest_port.strip() + "," + signature.strip() + "," + severity.strip() + "," + action.strip()
+        else:
+            var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src.strip() + "," + src_port.strip() + "," + ip_dest.strip() + "," + dest_port.strip() + "," + signature.strip() + "," + severity.strip() + "," + action.strip()       
+        NumberOfP1IPs = NumberOfP1IPs + 1
+        P1_IP_list.append(var)
   
 #SECOND LEVEL FILTER
 for item in P1_IP_list:
-    ip = item.split(",")
-    ip = ip[3].strip()
-    port = item.split(",")
-    port = port[6].strip()
+    if item.find("IDP_ATTACK") > -1 or item.find("SCREEN") > -1:
+        ip = item.split(",")
+        ip = ip[3].strip()
+        port = item.split(",")
+        port = port[6].strip()
 
-    Match = False
-    for subitem in P1_IP_Unique:
-        if subitem == ip:
-            Match = True
-            break;
+        Match = False
+        for subitem in P1_IP_Unique:
+            if subitem == ip:
+                Match = True
+                break;
+                
+        if Match == False:
+            if ip.count('.') == 3:
+                P1_IP_Unique.append(ip)
+                NumberOfAttackers = NumberOfAttackers + 1
             
-    if Match == False:
-        if ip.count('.') == 3:
-            P1_IP_Unique.append(ip)
-            NumberOfAttackers = NumberOfAttackers + 1
+        P1_Port_list.append(port)
         
-    P1_Port_list.append(port)
-    
-    if ip.count('.') == 3:
-        P1_Src_IP_list.append(ip)
+        if ip.count('.') == 3:
+            P1_Src_IP_list.append(ip)
     
     if item.find("IDP_ATTACK") > -1:
         signature = item.split(",")
@@ -375,12 +499,42 @@ for item in P5list:
     f.write(item)
     
 print("\nNumber of {:s} Alerts {:d}\n".format(P6,NumberOfP6s))
-f.write("\nNumber of {:s} Alerts {:d}\n".format(P6,NumberOfP6s))
+print("Number of {:s} Alerts Permitted {:d}\n".format(P6,SECINTEL_Permit))
+print("Number of {:s} Alerts Blocked {:d}\n".format(P6,SECINTEL_Block))
 
+f.write("\nNumber of {:s} Alerts {:d}\n".format(P6,NumberOfP6s))
+f.write("Number of {:s} Alerts Permitted {:d}\n".format(P6,SECINTEL_Permit))
 for item in P6list:
-    if EnableVerbosity == True:
-        print(item)
-    f.write(item)
+    if item.find("PERMIT") > -1:
+        if EnableVerbosity == True:
+            print(item)
+        f.write(item)
+        
+f.write("Number of {:s} Alerts Blocked {:d}\n".format(P6,SECINTEL_Block))
+for item in P6list:
+    if item.find("BLOCK") > -1:
+        if EnableVerbosity == True:
+            print(item)
+        f.write(item)
+    
+print("\nNumber of {:s} Alerts {:d}\n".format(P7,NumberOfP7s))
+print("Number of {:s} Alerts Permitted {:d}\n".format(P7,AAMW_Permit))
+print("Number of {:s} Alerts Blocked {:d}\n".format(P7,AAMW_Block))
+
+f.write("\nNumber of {:s} Alerts {:d}\n".format(P7,NumberOfP7s))
+f.write("\nNumber of {:s} Alerts Permitted {:d}\n".format(P7,AAMW_Permit))
+for item in P7list:
+    if item.find("PERMIT") > -1:
+        if EnableVerbosity == True:
+            print(item)
+        f.write(item)
+        
+f.write("\nNumber of {:s} Alerts Blocked {:d}\n".format(P7,AAMW_Block))
+for item in P7list:
+    if item.find("BLOCK") > -1:
+        if EnableVerbosity == True:
+            print(item)
+        f.write(item)
 
 print("\nNumber of Attackers {:d}\n".format(NumberOfAttackers))
 f.write("\nNumber of Attackers {:d}\n".format(NumberOfAttackers))
@@ -406,7 +560,7 @@ f.write("Address                  Count\n")
 f.write("------------------------------\n")
 
 for ip, count in P1_Src_IP_list_Counter.most_common(50):
-    f.write("{:15s}          {:7d}\n".format(ip, count))
+    f.write("{:15s}        {:7d}\n".format(ip, count))
     
 f.write("\nTop 50 IDP Signatures\n")
 f.write("Signature                                      Count\n")
