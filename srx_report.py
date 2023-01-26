@@ -26,6 +26,8 @@ NumberOfP4s = 0
 NumberOfP5s = 0
 NumberOfP6s = 0
 NumberOfP7s = 0
+IDP_Allow = 0
+IDP_Drop = 0
 SECINTEL_Permit = 0
 SECINTEL_Block = 0
 AAMW_Permit = 0
@@ -171,6 +173,11 @@ for file in files:
                     if Match == False:
                         NumberOfP2s = NumberOfP2s + 1
                         P2list.append(line)
+                        
+                        if line.find("NONE") > -1:
+                            IDP_Allow = IDP_Allow + 1
+                        elif line.find("DROP") > -1:
+                            IDP_Drop = IDP_Drop + 1
             
             if EnableP3Report == True:
                 if line.find("SCREEN") > -1:
@@ -467,12 +474,23 @@ for item in P1_IP_list:
         f1.write(item + "\n")
     
 print("\nNumber of {:s} Alerts {:d}\n".format(P2,NumberOfP2s))
-f.write("\nNumber of {:s} Alerts {:d}\n".format(P2,NumberOfP2s))
+print("Number of {:s} Alerts Allowed {:d}\n".format(P6,IDP_Allow))
+print("Number of {:s} Alerts Dropped {:d}\n".format(P6,IDP_Drop))
 
+f.write("\nNumber of {:s} Alerts {:d}\n".format(P2,NumberOfP2s))
+f.write("Number of {:s} Alerts Allowed {:d}\n".format(P2,IDP_Allow))
 for item in P2list:
-    if EnableVerbosity == True:
-        print(item)
-    f.write(item)
+    if item.find("NONE") > -1:
+        if EnableVerbosity == True:
+            print(item)
+        f.write(item)
+        
+f.write("Number of {:s} Alerts Dropped {:d}\n".format(P2,IDP_Drop))
+for item in P2list:
+    if item.find("DROP") > -1:
+        if EnableVerbosity == True:
+            print(item)
+        f.write(item)
     
 print("\nNumber of {:s} Alerts {:d}\n".format(P3,NumberOfP3s))
 f.write("\nNumber of {:s} Alerts {:d}\n".format(P3,NumberOfP3s))
