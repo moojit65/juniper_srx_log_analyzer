@@ -474,8 +474,8 @@ for item in P1_IP_list:
         f1.write(item + "\n")
     
 print("\nNumber of {:s} Alerts {:d}\n".format(P2,NumberOfP2s))
-print("Number of {:s} Alerts Allowed {:d}\n".format(P6,IDP_Allow))
-print("Number of {:s} Alerts Dropped {:d}\n".format(P6,IDP_Drop))
+print("Number of {:s} Alerts Allowed {:d}\n".format(P2,IDP_Allow))
+print("Number of {:s} Alerts Dropped {:d}\n".format(P2,IDP_Drop))
 
 f.write("\nNumber of {:s} Alerts {:d}\n".format(P2,NumberOfP2s))
 f.write("Number of {:s} Alerts Allowed {:d}\n".format(P2,IDP_Allow))
