@@ -15,8 +15,9 @@ import argparse
 #   DATE        VER         AUTHOR          DESCRIPTION
 #   07-2021     1.0         MOOJIT          INITIAL RELEASE
 #   01-2023     2.0         MOOJIT          ADDED SECINTEL, AAMW PROCESSING
+#   10-2023     3.0         MOOJIT          FIXED DNSF
 
-MAJOR_VERSION = 2
+MAJOR_VERSION = 3
 MINOR_VERSION = 0
 
 NumberOfP1s = 0
@@ -26,6 +27,7 @@ NumberOfP4s = 0
 NumberOfP5s = 0
 NumberOfP6s = 0
 NumberOfP7s = 0
+NumberOfP8s = 0
 IDP_Allow = 0
 IDP_Drop = 0
 SECINTEL_Permit = 0
@@ -42,6 +44,7 @@ EnableP4Report = True
 EnableP5Report = True
 EnableP6Report = True
 EnableP7Report = True
+EnableP8Report = True
 EnableNmapScan = False
 EnableCSVCreation = True
 EnableVerbosity = False
@@ -54,6 +57,7 @@ P4 = "SCREENS TCP"
 P5 = "SCREENS UDP"
 P6 = "SECINTEL"
 P7 = "AAMW"
+P8 = "SCREENS IP"
 
 P1list = []
 P2list = []
@@ -62,6 +66,7 @@ P4list = []
 P5list = []
 P6list = []
 P7list = []
+P8list = []
 
 P1_IP_list = []
 P2_IP_list = []
@@ -214,6 +219,18 @@ for file in files:
                     if Match == False:
                         NumberOfP5s = NumberOfP5s + 1
                         P5list.append(line)
+             
+            if EnableP8Report == True:
+                if line.find("SCREEN_IP") > -1:
+                    Match = False
+                    for item in P8list:
+                        if item == line:
+                            Match = True
+                            break
+
+                    if Match == False:
+                        NumberOfP8s = NumberOfP8s + 1
+                        P8list.append(line)
                         
             if EnableP6Report == True:
                 if line.find("RT_SECINTEL") > -1:
@@ -229,7 +246,7 @@ for file in files:
                         
                         if line.find("PERMIT") > -1:
                             SECINTEL_Permit = SECINTEL_Permit + 1
-                        elif line.find("BLOCK") > -1:
+                        elif ( (line.find("BLOCK") > -1) or (line.find("drop") > -1) ):
                             SECINTEL_Block = SECINTEL_Block + 1
                        
             if EnableP7Report == True:
@@ -304,8 +321,12 @@ for line in P1list:
         signature = signature[4].split(":")
         signature = signature[0].replace("source",":")
         signature = signature.split(":")
-        action = line.split(":")
-        action = action[11].strip()
+        offset = line.find("action:")
+        if offset > -1:
+            action = line[offset:].split(":")
+            action = action[1].strip()
+        else:
+            action = "none"
         if len(timestamp[1]) > 1:
             var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src + "," + src_port + "," + ip_dest + "," + dest_port + "," + signature[0].strip() + "," + "," + action
         else:
@@ -338,9 +359,14 @@ for line in P1list:
             dest_port = dest_port[0].strip()
         if line.find("sub-category") > -1:
             myindex = line.find("sub-category")
-            signature = line[myindex:].split("=")
-            signature = signature[1].split(" ")
-            signature = signature[0].strip()
+            if line.find("DNSF_ACTION_LOG") > -1:
+                signature = line[myindex:].split("=")
+                signature = signature[2].split(" ")
+                signature = signature[0].strip()
+            else:
+                signature = line[myindex:].split("=")
+                signature = signature[1].split(" ")
+                signature = signature[0].strip()
         if line.find("threat-severity") > -1:
             myindex = line.find("threat-severity")
             severity = line[myindex:].split("=")
@@ -512,6 +538,14 @@ print("\nNumber of {:s} Alerts {:d}\n".format(P5,NumberOfP5s))
 f.write("\nNumber of {:s} Alerts {:d}\n".format(P5,NumberOfP5s))
 
 for item in P5list:
+    if EnableVerbosity == True:
+        print(item)
+    f.write(item)
+
+print("\nNumber of {:s} Alerts {:d}\n".format(P8,NumberOfP8s))
+f.write("\nNumber of {:s} Alerts {:d}\n".format(P5,NumberOfP8s))
+
+for item in P8list:
     if EnableVerbosity == True:
         print(item)
     f.write(item)
