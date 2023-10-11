@@ -1,7 +1,7 @@
 # juniper_srx_log_analyzer
 Analyze IDP, Screen, SecIntel and Advanced-Anti-Malware Messages
 
-Juniper SRX Report 2.0 usage: srx_report.py [-h] [-f FILE] [-n] [-v]
+Juniper SRX Report 3.0 usage: srx_report.py [-h] [-f FILE] [-n] [-v]
 
 optional arguments: -h, --help show this help message and exit
 
