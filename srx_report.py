@@ -16,8 +16,10 @@ import argparse
 #   07-2021     1.0         MOOJIT          INITIAL RELEASE
 #   01-2023     2.0         MOOJIT          ADDED SECINTEL, AAMW PROCESSING
 #   10-2023     3.0         MOOJIT          FIXED DNSF
+#   11-2023     4.0         MOOJIT          FIXED SCREEN_IP REPORTING
+#   12-2023     5.0         MOOJIT          FIXED SCREEN_IP FILE REPORTING BEHAVIOR
 
-MAJOR_VERSION = 3
+MAJOR_VERSION = 5
 MINOR_VERSION = 0
 
 NumberOfP1s = 0
@@ -327,10 +329,26 @@ for line in P1list:
             action = action[1].strip()
         else:
             action = "none"
-        if len(timestamp[1]) > 1:
-            var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src + "," + src_port + "," + ip_dest + "," + dest_port + "," + signature[0].strip() + "," + "," + action
+        if line.find("SCREEN_IP") > -1:
+            ip_src = line.split(":")
+            ip_src = ip_src[5].split(",")
+            ip_src = ip_src[0].strip()
+            
+            ip_dest = line.split(":")
+            ip_dest = ip_dest[6].split(",")
+
+            ip_dest = ip_dest[0].strip()
+            if len(timestamp[1]) > 1:
+                var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src + "," + "," + ip_dest + "," + "," + signature[0].strip() + "," + "," + action
+            else:
+                ip_src = ip_src.split(",")
+                ip_src = ip_src[0].strip()
+                var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src + "," + "," + ip_dest + "," + "," + signature[0].strip() + "," + "," + action
         else:
-            var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src + "," + src_port + "," + ip_dest + "," + dest_port + "," + signature[0].strip() + "," + "," + action
+            if len(timestamp[1]) > 1:
+                var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src + "," + src_port + "," + ip_dest + "," + dest_port + "," + signature[0].strip() + "," + "," + action
+            else:
+                var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src + "," + src_port + "," + ip_dest + "," + dest_port + "," + signature[0].strip() + "," + "," + action
         NumberOfP1IPs = NumberOfP1IPs + 1
         P1_IP_list.append(var)
         
@@ -431,12 +449,12 @@ for line in P1list:
   
 #SECOND LEVEL FILTER
 for item in P1_IP_list:
-    if item.find("IDP_ATTACK") > -1 or item.find("SCREEN") > -1:
+    if item.find("IDP_ATTACK") > -1 or item.find("SCREEN_TCP") > -1 or item.find("SCREEN_UDP") > -1:
         ip = item.split(",")
         ip = ip[3].strip()
         port = item.split(",")
         port = port[6].strip()
-
+        
         Match = False
         for subitem in P1_IP_Unique:
             if subitem == ip:
@@ -458,9 +476,14 @@ for item in P1_IP_list:
         signature = signature[7].strip()
         P1_IDP_Signature_list.append(signature)
         
-    if item.find("SCREEN") > -1:
+    if item.find("SCREEN_TCP") > -1 or item.find("SCREEN_UDP") > -1:
         signature = item.split(",")
         signature = signature[7].strip()
+        P1_Screen_Signature_list.append(signature)
+        
+    if item.find("SCREEN_IP") > -1:
+        signature = item.split(",")
+        signature = signature[8].strip()
         P1_Screen_Signature_list.append(signature)
 
 #ANALYZE DESTINATION PORTS
@@ -543,7 +566,7 @@ for item in P5list:
     f.write(item)
 
 print("\nNumber of {:s} Alerts {:d}\n".format(P8,NumberOfP8s))
-f.write("\nNumber of {:s} Alerts {:d}\n".format(P5,NumberOfP8s))
+f.write("\nNumber of {:s} Alerts {:d}\n".format(P8,NumberOfP8s))
 
 for item in P8list:
     if EnableVerbosity == True:
