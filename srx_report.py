@@ -18,8 +18,9 @@ import argparse
 #   10-2023     3.0         MOOJIT          FIXED DNSF
 #   11-2023     4.0         MOOJIT          FIXED SCREEN_IP REPORTING
 #   12-2023     5.0         MOOJIT          FIXED SCREEN_IP FILE REPORTING BEHAVIOR
+#   12-2023     6.0         MOOJIT          FIXED SCREEN_IP TOP 50 REPORTING BEHAVIOR
 
-MAJOR_VERSION = 5
+MAJOR_VERSION = 6
 MINOR_VERSION = 0
 
 NumberOfP1s = 0
@@ -483,7 +484,7 @@ for item in P1_IP_list:
         
     if item.find("SCREEN_IP") > -1:
         signature = item.split(",")
-        signature = signature[8].strip()
+        signature = signature[7].strip()
         P1_Screen_Signature_list.append(signature)
 
 #ANALYZE DESTINATION PORTS
