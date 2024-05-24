@@ -19,8 +19,9 @@ import argparse
 #   11-2023     4.0         MOOJIT          FIXED SCREEN_IP REPORTING
 #   12-2023     5.0         MOOJIT          FIXED SCREEN_IP FILE REPORTING BEHAVIOR
 #   12-2023     6.0         MOOJIT          FIXED SCREEN_IP TOP 50 REPORTING BEHAVIOR
+#   05-2024     7.0         MOOJIT          CHANGED SCREEN TO RT_SCREEN FILTER
 
-MAJOR_VERSION = 6
+MAJOR_VERSION = 7
 MINOR_VERSION = 0
 
 NumberOfP1s = 0
@@ -159,7 +160,7 @@ for file in files:
         for line in f:
 
             if EnableP1Report == True:
-                if line.find("IDP_ATTACK") > -1 or line.find("SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1:
+                if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1:
                     Match = False
                     for item in P1list:
                         if item == line:
@@ -188,7 +189,7 @@ for file in files:
                             IDP_Drop = IDP_Drop + 1
             
             if EnableP3Report == True:
-                if line.find("SCREEN") > -1:
+                if line.find("RT_SCREEN") > -1:
                     Match = False
                     for item in P3list:
                         if item == line:
@@ -307,7 +308,7 @@ for line in P1list:
         NumberOfP1IPs = NumberOfP1IPs + 1
         P1_IP_list.append(var)
 
-    elif line.find("SCREEN") > -1:
+    elif line.find("RT_SCREEN") > -1:
         timestamp = line.split(" ")
         juniper_type = line.split(":")
         ip_src = line.split(":")
