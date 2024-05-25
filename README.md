@@ -5,7 +5,7 @@ Juniper SRX Report 3.0 usage: srx_report.py [-h] [-f FILE] [-n] [-v]
 
 optional arguments: -h, --help show this help message and exit
 
--f FILE, --file FILE provide path and filename to srx logs (ex. /var/log/src/mylogs, default: if not provide, /var/log/messages)
+-f FILE, --file FILE provide path and filename to srx logs (ex. /var/log/src/mylogs, default: if not provided, /var/log/messages)
 
 -n, --nmap perform nmap scan on detected IP addresses (default: nmap scans disabled)
 
