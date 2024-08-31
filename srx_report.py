@@ -400,7 +400,6 @@ for line in P1list:
         else:
             var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src.strip() + "," + src_port.strip() + "," + ip_dest.strip() + "," + dest_port.strip() + "," + signature.strip() + "," + severity.strip() + "," + action.strip()       
         NumberOfP1IPs = NumberOfP1IPs + 1
-        print(var)
         P1_IP_list.append(var)
         
     elif line.find("RT_SECINTEL") > -1:
