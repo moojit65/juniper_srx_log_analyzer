@@ -20,8 +20,9 @@ import argparse
 #   12-2023     5.0         MOOJIT          FIXED SCREEN_IP FILE REPORTING BEHAVIOR
 #   12-2023     6.0         MOOJIT          FIXED SCREEN_IP TOP 50 REPORTING BEHAVIOR
 #   05-2024     7.0         MOOJIT          CHANGED SCREEN TO RT_SCREEN FILTER
+#   08-202      8.0         MOOJIT          ADDED RT_FLOW_SESSION_DENY REPORTING
 
-MAJOR_VERSION = 7
+MAJOR_VERSION = 8
 MINOR_VERSION = 0
 
 NumberOfP1s = 0
@@ -32,12 +33,14 @@ NumberOfP5s = 0
 NumberOfP6s = 0
 NumberOfP7s = 0
 NumberOfP8s = 0
+NumberOfP9s = 0
 IDP_Allow = 0
 IDP_Drop = 0
 SECINTEL_Permit = 0
 SECINTEL_Block = 0
 AAMW_Permit = 0
 AAMW_Block = 0
+DENY_Counter = 0
 
 Match = False
 
@@ -49,6 +52,7 @@ EnableP5Report = True
 EnableP6Report = True
 EnableP7Report = True
 EnableP8Report = True
+EnableP9Report = True
 EnableNmapScan = False
 EnableCSVCreation = True
 EnableVerbosity = False
@@ -62,6 +66,7 @@ P5 = "SCREENS UDP"
 P6 = "SECINTEL"
 P7 = "AAMW"
 P8 = "SCREENS IP"
+P9 = "SESSION DENIALS"
 
 P1list = []
 P2list = []
@@ -71,6 +76,7 @@ P5list = []
 P6list = []
 P7list = []
 P8list = []
+P9list = []
 
 P1_IP_list = []
 P2_IP_list = []
@@ -160,7 +166,7 @@ for file in files:
         for line in f:
 
             if EnableP1Report == True:
-                if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1:
+                if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1 or line.find("RT_FLOW_SESSION_DENY") > -1:
                     Match = False
                     for item in P1list:
                         if item == line:
@@ -269,6 +275,18 @@ for file in files:
                             AAMW_Permit = AAMW_Permit + 1
                         elif line.find("BLOCK") > -1:
                             AAMW_Block = AAMW_Block + 1
+                            
+            if EnableP9Report == True:
+                if line.find("RT_FLOW_SESSION_DENY") > -1:
+                    Match = False
+                    for item in P9list:
+                        if item == line:
+                            Match = True
+                            break
+                    
+                    if Match == False:
+                        NumberOfP9s = NumberOfP9s + 1
+                        P9list.append(line)
         
         f.close
 
@@ -279,6 +297,7 @@ P4list.reverse()
 P5list.reverse()
 P6list.reverse()
 P7list.reverse()
+P9list.reverse()
 
 #FIRST LEVEL P1LIST FILTER  
 for line in P1list:
@@ -352,6 +371,36 @@ for line in P1list:
             else:
                 var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src + "," + src_port + "," + ip_dest + "," + dest_port + "," + signature[0].strip() + "," + "," + action
         NumberOfP1IPs = NumberOfP1IPs + 1
+        P1_IP_list.append(var)
+        
+    elif line.find("RT_FLOW_SESSION_DENY") > -1:
+        timestamp = line.split(" ")
+        juniper_type = line.split(":")
+        ip_src = line.split(":")
+        ip_src = ip_src[4].split(" ")
+        ip_src = ip_src[3].split("/")
+        
+        src_port = ip_src[1].split("-")
+        src_port = src_port[0].strip()
+        
+        ip_src = ip_src[0].strip()
+
+        ip_dest = line.split(">")
+        ip_dest = ip_dest[1].split(" ")
+        ip_dest = ip_dest[0].split("/")
+        dest_port = ip_dest[1].strip()
+        ip_dest = ip_dest[0].strip()
+        
+        signature = "N/A"
+        severity = "N/A"
+        action = "N/A"
+        
+        if len(timestamp[1]) > 1:
+            var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src.strip() + "," + src_port.strip() + "," + ip_dest.strip() + "," + dest_port.strip() + "," + signature.strip() + "," + severity.strip() + "," + action.strip()
+        else:
+            var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src.strip() + "," + src_port.strip() + "," + ip_dest.strip() + "," + dest_port.strip() + "," + signature.strip() + "," + severity.strip() + "," + action.strip()       
+        NumberOfP1IPs = NumberOfP1IPs + 1
+        print(var)
         P1_IP_list.append(var)
         
     elif line.find("RT_SECINTEL") > -1:
@@ -529,14 +578,14 @@ print("Number of {:s} Alerts Allowed {:d}\n".format(P2,IDP_Allow))
 print("Number of {:s} Alerts Dropped {:d}\n".format(P2,IDP_Drop))
 
 f.write("\nNumber of {:s} Alerts {:d}\n".format(P2,NumberOfP2s))
-f.write("Number of {:s} Alerts Allowed {:d}\n".format(P2,IDP_Allow))
+f.write("\nNumber of {:s} Alerts Allowed {:d}\n".format(P2,IDP_Allow))
 for item in P2list:
     if item.find("NONE") > -1:
         if EnableVerbosity == True:
             print(item)
         f.write(item)
         
-f.write("Number of {:s} Alerts Dropped {:d}\n".format(P2,IDP_Drop))
+f.write("\nNumber of {:s} Alerts Dropped {:d}\n".format(P2,IDP_Drop))
 for item in P2list:
     if item.find("DROP") > -1:
         if EnableVerbosity == True:
@@ -575,19 +624,27 @@ for item in P8list:
         print(item)
     f.write(item)
     
+print("\nNumber of {:s} Session Denials {:d}\n".format(P9,NumberOfP9s))
+f.write("\nNumber of {:s} Session Denials {:d}\n".format(P9,NumberOfP9s))
+
+for item in P9list:
+    if EnableVerbosity == True:
+        print(item)
+    f.write(item)
+    
 print("\nNumber of {:s} Alerts {:d}\n".format(P6,NumberOfP6s))
 print("Number of {:s} Alerts Permitted {:d}\n".format(P6,SECINTEL_Permit))
 print("Number of {:s} Alerts Blocked {:d}\n".format(P6,SECINTEL_Block))
 
 f.write("\nNumber of {:s} Alerts {:d}\n".format(P6,NumberOfP6s))
-f.write("Number of {:s} Alerts Permitted {:d}\n".format(P6,SECINTEL_Permit))
+f.write("\nNumber of {:s} Alerts Permitted {:d}\n".format(P6,SECINTEL_Permit))
 for item in P6list:
     if item.find("PERMIT") > -1:
         if EnableVerbosity == True:
             print(item)
         f.write(item)
         
-f.write("Number of {:s} Alerts Blocked {:d}\n".format(P6,SECINTEL_Block))
+f.write("\nNumber of {:s} Alerts Blocked {:d}\n".format(P6,SECINTEL_Block))
 for item in P6list:
     if item.find("BLOCK") > -1:
         if EnableVerbosity == True:
