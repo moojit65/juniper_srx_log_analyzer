@@ -10,6 +10,7 @@ from datetime import date, datetime, timedelta
 import collections
 import sys
 import argparse
+import codecs
 
 #RELEASE NOTES
 #   DATE        VER         AUTHOR          DESCRIPTION
@@ -20,10 +21,13 @@ import argparse
 #   12-2023     5.0         MOOJIT          FIXED SCREEN_IP FILE REPORTING BEHAVIOR
 #   12-2023     6.0         MOOJIT          FIXED SCREEN_IP TOP 50 REPORTING BEHAVIOR
 #   05-2024     7.0         MOOJIT          CHANGED SCREEN TO RT_SCREEN FILTER
-#   08-202      8.0         MOOJIT          ADDED RT_FLOW_SESSION_DENY REPORTING
+#   08-2024     8.0         MOOJIT          ADDED RT_FLOW_SESSION_DENY REPORTING
+#   10-2024     9.0         MOOJIT          FIXED CODEC BUG ON PYTHON3
 
-MAJOR_VERSION = 8
+MAJOR_VERSION = 9
 MINOR_VERSION = 0
+
+JUNIPER_VERSION = "Junos: 23.4R2-S2.1"
 
 NumberOfP1s = 0
 NumberOfP2s = 0
@@ -118,7 +122,7 @@ filename = "messages*"
 
 NumberOfAttackers = 0
 
-print("\nJuniper SRX Report " + str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + " ")
+print("\nJuniper SRX Report " + str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + " supporting Juniper versions up to " + JUNIPER_VERSION)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--file", required=False, help="provide path and filename to srx logs (ex: /var/log/src/mylogs, default: /var/log/messages)")
@@ -161,7 +165,7 @@ files.sort( key=lambda x: os.stat(os.path.join(path, x)).st_mtime)
 for file in files:
     if fnmatch.fnmatch(file, 'messages*'):
         print(file)
-        f = open(path + file,"r")
+        f = codecs.open(path + file, "r", encoding="utf-8", errors="ignore")
         
         for line in f:
 
