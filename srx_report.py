@@ -22,7 +22,7 @@ import codecs
 #   12-2023     6.0         MOOJIT          FIXED SCREEN_IP TOP 50 REPORTING BEHAVIOR
 #   05-2024     7.0         MOOJIT          CHANGED SCREEN TO RT_SCREEN FILTER
 #   08-2024     8.0         MOOJIT          ADDED RT_FLOW_SESSION_DENY REPORTING
-#   10-2024     9.0         MOOJIT          FIXED CODEC BUG ON PYTHON3
+#   10-2024     9.0         MOOJIT          FIXED CODEC BUG ON PYTHON3. FIXED SIGNATURE DETERMINATION FOR REVERSE_SHELL EVENTS.
 
 MAJOR_VERSION = 9
 MINOR_VERSION = 0
@@ -409,6 +409,8 @@ for line in P1list:
     elif line.find("RT_SECINTEL") > -1:
         timestamp = line.split(" ")
         juniper_type = line.split(":")
+        signature = "N/A"
+        print(line)
         if line.find("source-address") > -1:
             myindex = line.find("source-address")
             ip_src = line[myindex:].split("=")
