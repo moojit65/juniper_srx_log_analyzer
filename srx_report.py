@@ -26,7 +26,7 @@ import codecs
 #   10-2024     10.0        MOOJIT          ADD STANDARD INIT/MAIN SECTIONS.
 
 def main():
-    MAJOR_VERSION = 9
+    MAJOR_VERSION = 10
     MINOR_VERSION = 0
 
     JUNIPER_VERSION = "Junos: 23.4R2-S2.1"
