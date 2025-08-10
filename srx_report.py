@@ -24,12 +24,13 @@ import codecs
 #   08-2024     8.0         MOOJIT          ADDED RT_FLOW_SESSION_DENY REPORTING
 #   10-2024     9.0         MOOJIT          FIXED CODEC BUG ON PYTHON3. FIXED SIGNATURE DETERMINATION FOR REVERSE_SHELL EVENTS.
 #   10-2024     10.0        MOOJIT          ADD STANDARD INIT/MAIN SECTIONS.
+#   08-2025	11.0        MOOJIT          ADDED FIX FOR RT_FLOW SIGNATURE
 
 def main():
-    MAJOR_VERSION = 10
+    MAJOR_VERSION = 11
     MINOR_VERSION = 0
 
-    JUNIPER_VERSION = "Junos: 23.4R2-S2.1"
+    JUNIPER_VERSION = "Junos: 23.4R2-S5.5"
 
     NumberOfP1s = 0
     NumberOfP2s = 0
@@ -386,16 +387,22 @@ def main():
             ip_src = ip_src[4].split(" ")
             ip_src = ip_src[3].split("/")
             
-            src_port = ip_src[1].split("-")
-            src_port = src_port[0].strip()
+            if ip_src is not None:
+                 src_port = ip_src[1].split("-")
+                 src_port = src_port[0].strip()
             
-            ip_src = ip_src[0].strip()
+                 ip_src = ip_src[0].strip()
 
-            ip_dest = line.split(">")
-            ip_dest = ip_dest[1].split(" ")
-            ip_dest = ip_dest[0].split("/")
-            dest_port = ip_dest[1].strip()
-            ip_dest = ip_dest[0].strip()
+                 ip_dest = line.split(">")
+                 ip_dest = ip_dest[1].split(" ")
+                 ip_dest = ip_dest[0].split("/")
+                 dest_port = ip_dest[1].strip()
+                 ip_dest = ip_dest[0].strip()
+            else:
+                 ip_src = "N/A"
+                 ip_dest = "N/A"
+                 src_port = "N/A"
+                 dest_port = "N/A"
             
             signature = "N/A"
             severity = "N/A"
