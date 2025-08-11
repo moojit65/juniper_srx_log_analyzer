@@ -384,20 +384,27 @@ def main():
             timestamp = line.split(" ")
             juniper_type = line.split(":")
             ip_src = line.split(":")
-            ip_src = ip_src[4].split(" ")
-            ip_src = ip_src[3].split("/")
-            
-            if ip_src is not None:
-                 src_port = ip_src[1].split("-")
-                 src_port = src_port[0].strip()
-            
-                 ip_src = ip_src[0].strip()
 
-                 ip_dest = line.split(">")
-                 ip_dest = ip_dest[1].split(" ")
-                 ip_dest = ip_dest[0].split("/")
-                 dest_port = ip_dest[1].strip()
-                 ip_dest = ip_dest[0].strip()
+            if ip_src[3].find("RT_FLOW") > -1:
+                 ip_src = ip_src[4].split(" ")
+                 ip_src = ip_src[3].split("/")
+            
+                 if ip_src is not None:
+                      src_port = ip_src[1].split("-")
+                      src_port = src_port[0].strip()
+            
+                      ip_src = ip_src[0].strip()
+
+                      ip_dest = line.split(">")
+                      ip_dest = ip_dest[1].split(" ")
+                      ip_dest = ip_dest[0].split("/")
+                      dest_port = ip_dest[1].strip()
+                      ip_dest = ip_dest[0].strip()
+                 else:
+                      ip_src = "N/A"
+                      ip_dest = "N/A"
+                      src_port = "N/A"
+                      dest_port = "N/A"
             else:
                  ip_src = "N/A"
                  ip_dest = "N/A"
