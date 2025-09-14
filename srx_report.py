@@ -25,9 +25,10 @@ import codecs
 #   10-2024     9.0         MOOJIT          FIXED CODEC BUG ON PYTHON3. FIXED SIGNATURE DETERMINATION FOR REVERSE_SHELL EVENTS.
 #   10-2024     10.0        MOOJIT          ADD STANDARD INIT/MAIN SECTIONS.
 #   08-2025	11.0        MOOJIT          ADDED FIX FOR RT_FLOW SIGNATURE
+#   09-2025	12.0        MOOJIT          DISABLED RT_FLOW_SESSION_DENY REPORTING BY DEFAULT. FILTER OUT RT_SCREEN ALARMS.
 
 def main():
-    MAJOR_VERSION = 11
+    MAJOR_VERSION = 12
     MINOR_VERSION = 0
 
     JUNIPER_VERSION = "Junos: 23.4R2-S5.5"
@@ -64,6 +65,7 @@ def main():
     EnableCSVCreation = True
     EnableVerbosity = False
     CustomPath = False
+    RT_FLOW_DENY_DISABLE = True
 
     P1 = "IDP ATTACK, SECINTEL, AAMW AND SCREENS"
     P2 = "IDP ATTACK"
@@ -173,16 +175,28 @@ def main():
             for line in f:
 
                 if EnableP1Report == True:
-                    if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1 or line.find("RT_FLOW_SESSION_DENY") > -1:
-                        Match = False
-                        for item in P1list:
-                            if item == line:
-                                Match = True
-                                break
+                    if RT_FLOW_DENY_DISABLE == False:
+                        if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1 or line.find("RT_FLOW_SESSION_DENY") > -1:
+                            Match = False
+                            for item in P1list:
+                                if item == line:
+                                    Match = True
+                                    break
+
+                            if Match == False:
+                                NumberOfP1s = NumberOfP1s + 1
+                                P1list.append(line)
+                    else:
+                        if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION")  > -1:
+                            Match = False
+                            for item in P1list:
+                                if item == line:
+                                    Match = True
+                                    break
                         
-                        if Match == False:
-                            NumberOfP1s = NumberOfP1s + 1
-                            P1list.append(line)
+                            if Match == False:
+                                NumberOfP1s = NumberOfP1s + 1
+                                P1list.append(line)
                 
                 if EnableP2Report == True:
                     if line.find("IDP_ATTACK") > -1:
@@ -334,7 +348,7 @@ def main():
             NumberOfP1IPs = NumberOfP1IPs + 1
             P1_IP_list.append(var)
 
-        elif line.find("RT_SCREEN") > -1:
+        elif line.find("RT_SCREEN") > -1 and line.find("alarm-without-drop") < 0:
             timestamp = line.split(" ")
             juniper_type = line.split(":")
             ip_src = line.split(":")
@@ -426,7 +440,6 @@ def main():
             timestamp = line.split(" ")
             juniper_type = line.split(":")
             signature = "N/A"
-            print(line)
             if line.find("source-address") > -1:
                 myindex = line.find("source-address")
                 ip_src = line[myindex:].split("=")
