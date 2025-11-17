@@ -26,9 +26,10 @@ import codecs
 #   10-2024     10.0        MOOJIT          ADD STANDARD INIT/MAIN SECTIONS.
 #   08-2025	    11.0        MOOJIT          ADDED FIX FOR RT_FLOW SIGNATURE
 #   09-2025	    12.0        MOOJIT          DISABLED RT_FLOW_SESSION_DENY REPORTING BY DEFAULT. FILTER OUT RT_SCREEN ALARMS.
+#   11-2025     13.0        MOOJIT          ADDED APPID TRACKING STATISTICS
 
 def main():
-    MAJOR_VERSION = 12
+    MAJOR_VERSION = 13
     MINOR_VERSION = 0
 
     JUNIPER_VERSION = "Junos: 23.4R2-S5.5"
@@ -42,6 +43,7 @@ def main():
     NumberOfP7s = 0
     NumberOfP8s = 0
     NumberOfP9s = 0
+    NumberOfP10s = 0
     IDP_Allow = 0
     IDP_Drop = 0
     SECINTEL_Permit = 0
@@ -61,6 +63,7 @@ def main():
     EnableP7Report = True
     EnableP8Report = True
     EnableP9Report = True
+    EnableP10Report = True
     EnableNmapScan = False
     EnableCSVCreation = True
     EnableVerbosity = False
@@ -76,6 +79,7 @@ def main():
     P7 = "AAMW"
     P8 = "SCREENS IP"
     P9 = "SESSION DENIALS"
+    P10 = "APPLICATIONS"
 
     P1list = []
     P2list = []
@@ -86,6 +90,7 @@ def main():
     P7list = []
     P8list = []
     P9list = []
+    P10list = []
 
     P1_IP_list = []
     P2_IP_list = []
@@ -121,6 +126,8 @@ def main():
     P1_Screen_Signature_list = []
     P1_IDP_Signature_list_Counter = []
     P1_Screen_Signature_list_Counter = []
+    P1_Application_list = []
+    P1_Application_list_Counter = []
 
     path = "/var/log/"
     filename = "messages*"
@@ -176,7 +183,7 @@ def main():
 
                 if EnableP1Report == True:
                     if RT_FLOW_DENY_DISABLE == False:
-                        if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1 or line.find("RT_FLOW_SESSION_DENY") > -1:
+                        if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION") > -1 or line.find("RT_FLOW_SESSION_DENY") > -1 or line.find("APPTRACK_SESSION_VOL_UPDATE") > -1:
                             Match = False
                             for item in P1list:
                                 if item == line:
@@ -187,7 +194,7 @@ def main():
                                 NumberOfP1s = NumberOfP1s + 1
                                 P1list.append(line)
                     else:
-                        if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION")  > -1:
+                        if line.find("IDP_ATTACK") > -1 or line.find("RT_SCREEN") > -1 or line.find("RT_SECINTEL") > -1 or line.find("AAMW_ACTION")  > -1 or line.find("APPTRACK_SESSION_VOL_UPDATE") > -1:
                             Match = False
                             for item in P1list:
                                 if item == line:
@@ -308,6 +315,18 @@ def main():
                         if Match == False:
                             NumberOfP9s = NumberOfP9s + 1
                             P9list.append(line)
+                            
+                    if EnableP10Report == True:
+                        if line.find("APPTRACK_SESSION_VOL_UPDATE") > -1:
+                            Match = False
+                            for item in P10list:
+                                if item == line:
+                                    Match = True
+                                    break
+                            
+                            if Match == False:
+                                NumberOfP10s = NumberOfP10s + 1
+                                P10list.append(line)
             
             f.close
 
@@ -319,6 +338,7 @@ def main():
     P6list.reverse()
     P7list.reverse()
     P9list.reverse()
+    P10list.reverse()
 
     #FIRST LEVEL P1LIST FILTER  
     for line in P1list:
@@ -345,6 +365,29 @@ def main():
                 var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src[0].strip() + "," + src_port[0].strip() + "," + ip_dest[0].strip() + "," + dest_port[0].strip() + "," + signature[0].strip() + "," + severity[0].strip() + "," + action[0].strip()
             else:
                 var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src[0].strip() + "," + src_port[0].strip() + "," + ip_dest[0].strip() + "," + dest_port[0].strip() + "," + signature[0].strip() + "," + severity[0].strip() + "," + action[0].strip()       
+            NumberOfP1IPs = NumberOfP1IPs + 1
+            P1_IP_list.append(var)
+            
+        elif line.find("APPTRACK_SESSION_VOL_UPDATE") > -1:
+            timestamp = line.split(" ")
+            juniper_type = line.split(":")
+            ip_src = line.split(":")
+            ip_src = ip_src[5].split("/")
+            src_port = line.split(":")
+            src_port = src_port[5].split("/")
+            src_port = src_port[1].split("-")
+            ip_dest = line.split(">")
+            ip_dest = ip_dest[1].split("/")
+            dest_port = line.split("/")
+            dest_port = dest_port[2].split(" ")
+            signature = line.split(" ")
+            signature = signature[11] + " " + signature[12]
+            severity = "N/A"
+            action = "N/A"
+            if len(timestamp[1]) > 1:
+                var = timestamp[0] + " " + timestamp[1] + " " + timestamp[2] + "," + timestamp[3] + "," + juniper_type[3].strip() + "," + ip_src[0].strip() + "," + src_port[0].strip() + "," + ip_dest[0].strip() + "," + dest_port[0].strip() + "," + signature.strip() + "," + severity + "," + action
+            else:
+                var = timestamp[0] + " " + timestamp[1] + timestamp[2] + " " + timestamp[3] + "," + timestamp[4] + "," + juniper_type[3].strip() + "," + ip_src[0].strip() + "," + src_port[0].strip() + "," + ip_dest[0].strip() + "," + dest_port[0].strip() + "," + signature.strip() + "," + severity + "," + action       
             NumberOfP1IPs = NumberOfP1IPs + 1
             P1_IP_list.append(var)
 
@@ -570,6 +613,11 @@ def main():
             signature = item.split(",")
             signature = signature[7].strip()
             P1_Screen_Signature_list.append(signature)
+            
+        if item.find("APPTRACK_SESSION_VOL_UPDATE") > -1:
+            signature = item.split(",")
+            signature = signature[7].strip()
+            P1_Application_list.append(signature)
 
     #ANALYZE DESTINATION PORTS
     if EnableP1Report == True:
@@ -577,6 +625,7 @@ def main():
         P1_Src_IP_list_Counter = collections.Counter(P1_Src_IP_list)
         P1_IDP_Signature_list_Counter = collections.Counter(P1_IDP_Signature_list)
         P1_Screen_Signature_list_Counter = collections.Counter(P1_Screen_Signature_list)
+        P1_Application_list_Counter = collections.Counter(P1_Application_list)
 
     st = (datetime.now()).strftime('%Y-%m-%d_%H%M%S')
 
@@ -742,6 +791,13 @@ def main():
     f.write("----------------------------------------------------\n")
 
     for signature, count in P1_Screen_Signature_list_Counter.most_common(50):
+        f.write("{:35s}          {:7d}\n".format(signature, count))
+        
+    f.write("\nTop 50 Applications\n")
+    f.write("Application                                    Count\n")
+    f.write("----------------------------------------------------\n")
+
+    for signature, count in P1_Application_list_Counter.most_common(50):
         f.write("{:35s}          {:7d}\n".format(signature, count))
         
     if EnableNmapScan == True:
