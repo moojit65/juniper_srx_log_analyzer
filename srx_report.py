@@ -24,12 +24,13 @@ import codecs
 #   08-2024     8.0         MOOJIT          ADDED RT_FLOW_SESSION_DENY REPORTING
 #   10-2024     9.0         MOOJIT          FIXED CODEC BUG ON PYTHON3. FIXED SIGNATURE DETERMINATION FOR REVERSE_SHELL EVENTS.
 #   10-2024     10.0        MOOJIT          ADD STANDARD INIT/MAIN SECTIONS.
-#   08-2025	    11.0        MOOJIT          ADDED FIX FOR RT_FLOW SIGNATURE
-#   09-2025	    12.0        MOOJIT          DISABLED RT_FLOW_SESSION_DENY REPORTING BY DEFAULT. FILTER OUT RT_SCREEN ALARMS.
+#   08-2025     11.0        MOOJIT          ADDED FIX FOR RT_FLOW SIGNATURE
+#   09-2025     12.0        MOOJIT          DISABLED RT_FLOW_SESSION_DENY REPORTING BY DEFAULT. FILTER OUT RT_SCREEN ALARMS.
 #   11-2025     13.0        MOOJIT          ADDED APPID TRACKING STATISTICS
+#   12-2025     14.0        MOOJIT          UPDATED INPUT FILE HANDLING
 
 def main():
-    MAJOR_VERSION = 13
+    MAJOR_VERSION = 14
     MINOR_VERSION = 0
 
     JUNIPER_VERSION = "Junos: 23.4R2-S5.5"
@@ -130,21 +131,21 @@ def main():
     P1_Application_list_Counter = []
 
     path = "/var/log/"
-    filename = "messages*"
+    filename = "messages"
 
     NumberOfAttackers = 0
 
     print("\nJuniper SRX Report " + str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + " supporting Juniper versions up to " + JUNIPER_VERSION)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", required=False, help="provide path and filename to srx logs (ex: /var/log/src/mylogs, default: /var/log/messages)")
+    parser.add_argument("-p", "--path", required=False, help="provide path to srx logs (ex: /var/log/src/mylogs, default: /var/log/messages)")
     parser.add_argument("-n", "--nmap", required=False, help="perform nmap scan on detected IP addresses (default: nmaps scans disable)", action="store_true")
     parser.add_argument("-v", "--verbose", required=False, help="enable verbose output (default: verbosity disabled)", action="store_true")
     args = parser.parse_args()
 
-    if args.file:
+    if args.path:
         CustomPath = True
-        print("{:s} custom path will be used!".format(args.file))
+        print("{:s} custom path will be used!".format(args.path))
     if args.nmap:
         EnableNmapScan = True
         print("nmap scans enabled!")
@@ -158,14 +159,18 @@ def main():
 
     if CustomPath == True:
         path = ""
-        var = args.file.split("/")
+        var = args.path.split("/")
         seps = len(var)
         filename = var[seps-1]
         for item in range(1,seps-1):
             var_1 = "/" + var[item]
             path = path + var_1
         path = path + "/"
-        filename = filename + "*"
+        if filename == "":
+            filename = "messages"
+        else:
+            var = filename.split(".")
+            filename = var[0]
 
     if EnableVerbosity == True:
         print(path)
@@ -175,7 +180,7 @@ def main():
     files.sort( key=lambda x: os.stat(os.path.join(path, x)).st_mtime)
 
     for file in files:
-        if fnmatch.fnmatch(file, 'messages*'):
+        if fnmatch.fnmatch(file, filename + "*"):
             print(file)
             f = codecs.open(path + file, "r", encoding="utf-8", errors="ignore")
             
@@ -629,13 +634,13 @@ def main():
 
     st = (datetime.now()).strftime('%Y-%m-%d_%H%M%S')
 
-    print("\n" + "juniper_srx_" + st + "_report.txt")
+    print("\n" + "juniper_srx_" + filename + "_" + st + "_report.txt")
 
-    f = open("juniper_srx_" + st + "_report.txt","w")
+    f = open("juniper_srx_" + filename + "_" + st + "_report.txt","w")
 
     if EnableCSVCreation == True:
-        f1 = open("juniper_srx_" + st + "_report.csv","w")
-        print("\n" + "juniper_srx_" + st + "_report.csv")
+        f1 = open("juniper_srx_" + filename + "_" + st + "_report.csv","w")
+        print("\n" + "juniper_srx_" + filename + "_" + st + "_report.csv")
         f1.write("Timestamp" + "," + "Device" + "," + "Type" + "," + "SRC IP" + "," + "SRC PORT" + "," + "DEST IP" + "," + "DEST PORT" + "," + "Signature" + "," + "Severity" + "," + "Action" + "\n")
             
     print("\nNumber of {:s} Alerts {:d}\n".format(P1,NumberOfP1s))
