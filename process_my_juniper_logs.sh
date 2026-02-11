@@ -55,12 +55,14 @@ MYSCRIPT_DIR="$(pwd)"
 
 # Simple version (breaks on filenames with spaces or newlines)
 for file in "$MYSCRIPT_DIR"/*; do
-    if $MYMULTI == 1; then
-        echo "python3 srx_report.py -p $file -v &"
-        python3 srx_report.py -p $file &
-    else
-        echo "python3 srx_report.py -p $file -v"
-        python3 srx_report.py -p $file
+    if [[ ! "$file" =~ \.(sh|py)$ ]]; then
+        if $MYMULTI == 1; then
+            echo "python3 srx_report.py -p $file -v &"
+            python3 srx_report.py -p $file &
+        else
+            echo "python3 srx_report.py -p $file -v"
+            python3 srx_report.py -p $file
+        fi
     fi
 done
 
